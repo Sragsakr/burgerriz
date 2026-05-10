@@ -1,0 +1,6 @@
+framework module qr_bar_code {
+  umbrella header "qr_bar_code-umbrella.h"
+
+  export *
+  module * { export * }
+}

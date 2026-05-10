@@ -1,0 +1,129 @@
+# ================================
+# Flutter/Dart/Pub related
+# ================================
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+generated_plugin_registrant.dart
+**/doc/api/
+
+# Web
+web/generated_plugin_registrant.dart
+
+# ================================
+# iOS
+# ================================
+ios/Flutter/.last_build_id
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/.symlinks/
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/DerivedData/
+ios/.dart_tool/
+ios/.flutter-plugins
+ios/.flutter-plugins-dependencies
+ios/Flutter/ephemeral/
+ios/Podfile.lock
+
+# ================================
+# Android
+# ================================
+.android/
+android/.gradle/
+android/captures/
+android/local.properties
+android/app/debug
+android/app/profile
+android/app/release
+android/app/.cxx
+app/build/
+
+# ================================
+# macOS
+# ================================
+macos/Flutter/ephemeral/
+macos/.dart_tool/
+macos/.flutter-plugins
+macos/.flutter-plugins-dependencies
+
+# ================================
+# Windows
+# ================================
+windows/Flutter/ephemeral/
+windows/.dart_tool/
+windows/.flutter-plugins
+windows/.flutter-plugins-dependencies
+windows/build/
+
+# ================================
+# Linux
+# ================================
+linux/Flutter/ephemeral/
+linux/.dart_tool/
+linux/.flutter-plugins
+linux/.flutter-plugins-dependencies
+linux/build/
+
+# ================================
+# IDEs & Editor Settings
+# ================================
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+.vscode/settings.json
+*.code-workspace
+
+# Atom
+.atom/
+
+# ================================
+# Symbolication / Obfuscation
+# ================================
+app.*.symbols
+app.*.map.json
+
+# ================================
+# Logs / Temp / Coverage / Misc
+# ================================
+*.log
+*.tmp
+*.lock
+*.swp
+*.swo
+*.swn
+*.pyc
+*.class
+.history
+.DS_Store
+Thumbs.db
+coverage/
+.build/
+.buildlog/
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# ================================
+# Secrets / Environment files
+# ================================
+*.env
+.env*
+
+# ================================
+# Generated Dart Files
+# ================================
+*.g.dart
+*.config.dart
+*.freezed.dart
+*.mocks.dart

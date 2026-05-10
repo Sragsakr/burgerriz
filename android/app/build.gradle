@@ -1,0 +1,101 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+import java.text.SimpleDateFormat
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode', '1')
+def flutterVersionName = localProperties.getProperty('flutter.versionName', '1.0')
+
+// Get current date in yyyy-MM-dd format
+def currentDate = new Date().format('yyyy-MM-dd')
+
+android {
+    namespace = "com.posmaena.kiosk"
+    compileSdk = 36
+    ndkVersion = "27.0.12077973"
+
+    lintOptions {
+        checkReleaseBuilds false
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+
+    kotlin {
+        
+        jvmToolchain(17)
+    }
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = '17'
+        }
+    }
+
+    defaultConfig {
+        applicationId "com.posmaena.kiosk"
+        minSdkVersion 24
+        targetSdk 35
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+    }
+
+    buildTypes {
+        release {
+            debuggable false
+            minifyEnabled true
+            signingConfig = signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            setProperty("archivesBaseName", "PosMena" + flutterVersionName + "-v-" + flutterVersionCode + "-" + currentDate)
+        }
+    }
+     packagingOptions {
+        // Fix build errors with the same *.so files in aar
+        pickFirst 'lib/*/*.so'
+    }
+}
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+dependencies {
+    implementation "org.bouncycastle:bcprov-jdk15on:1.70"
+    implementation "org.bouncycastle:bcpkix-jdk15on:1.70"
+    implementation "org.conscrypt:conscrypt-android:2.5.2"
+     // ✅ PosLibUsb (POS USB Library)
+    debugImplementation files('libs/PosLibUsb-debug_1.0.16.aar')
+    releaseImplementation files('libs/PosLibUsb-release_1.0.16.aar')
+
+    // ✅ SuSDK (Superior SDK)
+    debugImplementation files('libs/SuSDK-debug_2.1.7.aar')
+    releaseImplementation files('libs/SuSDK-release_2.1.7.aar')
+
+    // ✅ SiSDK (Status Indicator SDK)
+    debugImplementation files('libs/SiSDK-debug_2.0.11.aar')
+    releaseImplementation files('libs/SiSDK-release_2.0.11.aar')
+}
+
+flutter {
+    source = "../.."
+}

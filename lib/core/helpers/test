@@ -1,0 +1,95 @@
+{
+    "id": "string",
+    "recieptNumber": "string",
+    "refRecieptNumber": "string",
+    "customerId": "string",
+    "refSaleTransactionId": "string",
+    "cashierId": 0,
+    "cashierShiftId": 0,
+    "subTotal": 0,
+    "vat": 0,
+    "total": 0,
+    "status": 0,
+    "tenantId": 0,
+    "notes": "string",
+    "isUploaded": true,
+    "isShift": true,
+    "saleTypeId": 0,
+    "discount": 0,
+    "discountType": 0,
+    "discountValue": 0,
+    "promotionCode": "string",
+    "promotionType": 0,
+    "promotionValue": 0,
+    "promotionAmount": 0,
+    "promotionCodeId": 0,
+    "date": "2025-07-01T20:43:51.279Z",
+    "terminalId": 0,
+    "happyHourId": 0,
+    "templateType": 0,
+    "isPrinted": true,
+    "additionalAllowns": 0,
+    "endOfDayId": 0,
+    "saleNotificationDetails": [
+      {
+        "id": "string",
+        "saleNotificationId": "string",
+        "productLotId": 0,
+        "quantity": 0,
+        "price": 0,
+        "priceIncludeVAT": 0,
+        "discount": 0,
+        "promotionCode": "string",
+        "promotionType": 0,
+        "promotionValue": 0,
+        "promotionAmount": 0,
+        "promotionCodeId": 0,
+        "tenantId": 0,
+        "unitOfMeasureId": 0,
+        "offerId": 0,
+        "offerType": 0,
+        "vat": 0,
+        "vatBeforeDiscount": 0,
+        "notes": "string",
+        "comboGroupId": 0,
+        "additionalAllowns": 0,
+        "allownsReason": "string",
+        "menuItemId": 0,
+        "saleNotificationReasonDetails": [
+          {
+            "saleNotificationDetailId": "string",
+            "refundResonId": 0
+          }
+        ],
+        "saleNotificationDetailVarients": [
+          {
+            "tenantId": 0,
+            "saleNotificationDetailId": "string",
+            "variantId": 0,
+            "variantValueId": 0
+          }
+        ],
+        "saleNotificationDetailsComboMealsItemSyncDtos": [
+          {
+            "id": "string",
+            "tenantId": 0,
+            "quantity": 0,
+            "price": 0,
+            "originalQuantity": 0,
+            "menuItemId": 0,
+            "saleNotificationDetailId": "string"
+          }
+        ]
+      }
+    ],
+    "salePaymentNotifications": [
+      {
+        "id": "string",
+        "tenantId": 0,
+        "currencyId": 0,
+        "tenderTypeId": 0,
+        "saleNotificationId": "string",
+        "value": 0
+      }
+    ]
+  }

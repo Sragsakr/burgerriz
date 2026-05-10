@@ -1,0 +1,16 @@
+{
+  "@@locale": "ar",
+  "auth_flow_install_title": "تثبيت الجهاز",
+  "auth_flow_install_ip_address": "عنوان IP",
+  "auth_flow_install_ip_missing": "تعذّر اكتشاف عنوان IP للجهاز. تأكد من الاتصال بالواي فاي أو الشبكة السلكية ثم أعد المحاولة.",
+  "auth_flow_install_cluster_id": "معرّف العنقود",
+  "auth_flow_install_environment": "البيئة",
+  "auth_flow_install_validate_continue": "تحقق ومتابعة",
+  "auth_flow_install_validation_failed": "فشل التحقق من التثبيت",
+  "auth_flow_login_title": "تسجيل دخول الجهاز",
+  "auth_flow_login_pin_code": "رمز PIN",
+  "auth_flow_login_submit": "تسجيل الدخول",
+  "auth_flow_error_pin_required": "رمز PIN مطلوب",
+  "auth_flow_error_online_required": "يلزم الاتصال بالإنترنت للمصادقة",
+  "auth_flow_error_install_missing": "بيانات التثبيت غير متوفرة"
+}

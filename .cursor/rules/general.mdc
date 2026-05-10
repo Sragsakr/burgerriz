@@ -1,0 +1,32 @@
+---
+description: General project rules for POSMena POS
+globs: "**/*.dart"
+alwaysApply: true
+---
+
+# POSMena POS — General Rules
+
+## Project Overview
+Flutter kiosk/handheld POS for Saudi Arabia. Android only. Riverpod for new state. SQLite for local data. Dio for API.
+
+## Architecture Quick Reference
+
+| Layer | Location | Responsibility |
+|-------|----------|----------------|
+| Core | `lib/core/` | Config, helpers, routing, services, theme |
+| Models | `lib/data/models/` | Pure data classes (no Flutter imports) |
+| Local DB | `lib/data/services/local_data/` | SQLite tables |
+| Remote API | `lib/data/services/remote_data/` | Dio-based API (interfaces + implementations) |
+| Repository | `lib/repository/` | Business logic combining local + remote |
+| Providers | `lib/providers/` | Riverpod StateNotifiers |
+| Features | `lib/features/{kiosk,mobile,shared}-features/` | UI by mode |
+
+## Critical Rules
+- Use `dPrint()` not `print()` — see `lib/core/helpers/helper_functions.dart`
+- Return `Either<Failure, T>` from data/repository methods — never throw across layers
+- Route product taps through `ProductTapHandler.handleProductTap()` only
+- Use `AppModeSession` for post-action route decisions — never hardcode mode checks in screens
+- Use Riverpod for all new state management
+- Each screen: `static const routePath` + `static const routeName`
+- Navigate: `context.goNamed(WidgetName.routeName)`
+- API services: call `await service.initialize()` before use

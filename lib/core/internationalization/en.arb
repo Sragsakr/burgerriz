@@ -1,0 +1,16 @@
+{
+  "@@locale": "en",
+  "auth_flow_install_title": "Install Device",
+  "auth_flow_install_ip_address": "IP Address",
+  "auth_flow_install_ip_missing": "Could not detect this device IP address. Connect to Wi‑Fi or Ethernet and try again.",
+  "auth_flow_install_cluster_id": "Cluster ID",
+  "auth_flow_install_environment": "Environment",
+  "auth_flow_install_validate_continue": "Validate & Continue",
+  "auth_flow_install_validation_failed": "Installation validation failed",
+  "auth_flow_login_title": "Device Login",
+  "auth_flow_login_pin_code": "PIN Code",
+  "auth_flow_login_submit": "Login",
+  "auth_flow_error_pin_required": "PIN is required",
+  "auth_flow_error_online_required": "Online authentication is required",
+  "auth_flow_error_install_missing": "Installation data is missing"
+}

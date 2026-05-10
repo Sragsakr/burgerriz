@@ -1,0 +1,534 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kiosk_point_of_sale/core/helpers/helper_functions.dart';
+import 'package:kiosk_point_of_sale/data/models/cart_item.dart';
+import 'package:kiosk_point_of_sale/data/models/payment_item_model.dart';
+import 'package:kiosk_point_of_sale/core/enums/discount_enum.dart';
+import 'package:kiosk_point_of_sale/providers/promotion_provider.dart';
+import 'package:kiosk_point_of_sale/repository/promotions/promotions_services.dart';
+import 'package:kiosk_point_of_sale/providers/payment_breakdown_provider.dart';
+import 'package:kiosk_point_of_sale/data/models/sales_models/sales_invoice.dart';
+import 'package:kiosk_point_of_sale/data/models/sales_models/sales_items_model.dart';
+import 'package:kiosk_point_of_sale/data/models/sales_models/sales_order_model.dart';
+import 'package:flutter/material.dart';
+import 'package:kiosk_point_of_sale/core/helpers/app_language_helper.dart';
+
+class OrderSummary {
+  final double subtotal;
+  final double discountAmount;
+  final double promotionAmount;
+  final double taxAmount;
+  final double totalAmount;
+  final double totalPaid;
+  final double remaining;
+  final double change;
+  // taxBeforeDiscount
+  final double taxBeforeDiscount;
+  // totalAmountBeforeDiscount
+  final double totalAmountBeforeDiscount;
+  // subTotalBeforeDiscount
+  final double subTotalBeforeDiscount;
+  // orderPromotionValue
+  final double orderPromotionValue;
+  // orderpromotionType
+  final int? orderPromotionType;
+  // orderpromotionAmount
+  final double orderPromotionAmount;
+  // orderpromotionCode
+  final String? orderPromotionCode;
+//for every item
+  // itemPromotions - Map of itemId to promotion data
+  final Map<int?, ItemPromotionData> itemPromotions;
+  // Flag to indicate if promotions were removed due to negative total
+  final bool promotionsRemoved;
+  // Validation messages to show to user
+  final List<String> validationMessages;
+  // Discount type and value
+  final int? discountType;
+  final int? customerId;
+  final double discount;
+
+  OrderSummary({
+    required this.subtotal,
+    required this.discountAmount,
+    required this.promotionAmount,
+    required this.taxAmount,
+    required this.totalAmount,
+    required this.totalPaid,
+    required this.remaining,
+    required this.change,
+    required this.taxBeforeDiscount,
+    required this.totalAmountBeforeDiscount,
+    required this.subTotalBeforeDiscount,
+    required this.orderPromotionValue,
+    this.orderPromotionType,
+    required this.orderPromotionAmount,
+    this.orderPromotionCode,
+    required this.itemPromotions,
+    required this.promotionsRemoved,
+    required this.validationMessages,
+    this.discountType,
+    required this.discount,
+    required this.customerId,
+  });
+}
+
+class ItemPromotionData {
+  final double promotionValue;
+  final int? promotionType;
+  final double promotionAmount;
+  final String? promotionCode;
+  final int? promotionId;
+
+  ItemPromotionData({
+    required this.promotionValue,
+    this.promotionType,
+    required this.promotionAmount,
+    this.promotionCode,
+    this.promotionId,
+  });
+}
+
+class OrderCalculator {
+  static const double TAX_RATE = 0.15;
+
+  /// Creates user-friendly validation messages
+  static String _createValidationMessage(String key, [List<String> params = const []]) {
+    switch (key) {
+      case 'empty_cart':
+        return translator(arText: "السلة فارغة. يرجى إضافة منتجات قبل المتابعة.", enText: "Cart is empty. Please add items before proceeding.");
+      case 'negative_discount':
+        return translator(arText: "قيمة الخصم لا يمكن أن تكون سالبة.", enText: "Discount value cannot be negative.");
+      case 'excessive_percentage':
+        return translator(arText: "نسبة الخصم لا يمكن أن تتجاوز 100%.", enText: "Percentage discount cannot exceed 100%.");
+      case 'discount_exceeds_subtotal':
+        return translator(arText: "مبلغ الخصم لا يمكن أن يتجاوز المجموع الفرعي.", enText: "Discount amount cannot exceed subtotal.");
+      case 'negative_total':
+        return translator(arText: "المبلغ الإجمالي كان سالباً. تم تعديل العروض والخصومات.", enText: "Total amount was negative. Promotions and discounts have been adjusted.");
+      case 'discount_removed':
+        return translator(arText: "تم إزالة الخصم لمنع المبلغ السالب.", enText: "Discount has been removed to prevent negative total.");
+      case 'no_payment':
+        return translator(arText: "لم يتم اختيار طريقة دفع.", enText: "No payment method selected.");
+      case 'negative_payment':
+        return translator(arText: "مبلغ الدفع لا يمكن أن يكون سالباً.", enText: "Payment amount cannot be negative.");
+      case 'excessive_promotion':
+        return translator(arText: "مبلغ العرض مرتفع جداً. يرجى التحقق.", enText: "Promotion amount is very high. Please verify.");
+      case 'zero_total':
+        return translator(arText: "المبلغ الإجمالي يجب أن يكون أكبر من صفر.", enText: "Total amount must be greater than zero.");
+      case 'invalid_quantity':
+        return translator(arText: "المنتج ${params.isNotEmpty ? params[0] : ''}: الكمية يجب أن تكون أكبر من صفر.", enText: "Item ${params.isNotEmpty ? params[0] : ''}: Quantity must be greater than zero.");
+      case 'negative_price':
+        return translator(arText: "المنتج ${params.isNotEmpty ? params[0] : ''}: السعر لا يمكن أن يكون سالباً.", enText: "Item ${params.isNotEmpty ? params[0] : ''}: Price cannot be negative.");
+      case 'zero_price':
+        return translator(arText: "المنتج ${params.isNotEmpty ? params[0] : ''}: السعر لا يمكن أن يكون صفر.", enText: "Item ${params.isNotEmpty ? params[0] : ''}: Price cannot be zero.");
+      case 'negative_payment_amount':
+        return translator(arText: "الدفع ${params.isNotEmpty ? params[0] : ''}: المبلغ لا يمكن أن يكون سالباً.", enText: "Payment ${params.isNotEmpty ? params[0] : ''}: Amount cannot be negative.");
+      default:
+        return translator(arText: "حدث خطأ في التحقق.", enText: "Validation error occurred.");
+    }
+  }
+
+  /// Display validation messages to user
+  static Future<void> _showValidationMessages(List<String> messages, BuildContext context) async {
+    dPrint("Showing warnings messages: $messages");
+
+    // if (messages.isEmpty || context == null) return;
+    
+    // Group messages by type
+    List<String> criticalErrors = [];
+    List<String> warnings = [];
+    
+    for (String message in messages) {
+      if (message.contains('Cart is empty') || 
+          message.contains('Total amount must be greater than zero') ||
+          message.contains('cannot be negative') ||
+          message.contains('No payment method selected')) {
+        criticalErrors.add(message);
+      } else {
+        warnings.add(message);
+      }
+    }
+    
+    dPrint("Showing warnings messages: $warnings");
+    // await Future.delayed(const Duration(seconds: 4));
+    
+    // Show critical errors first
+    if (criticalErrors.isNotEmpty) {
+      String errorMessage = criticalErrors.join('\n• ');
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.red, size: 28),
+                const SizedBox(width: 10),
+                Text(
+                  translator(arText: "مشاكل حرجة", enText: "Critical Issues"),
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontSize: ResponsiveHelper.getResponsiveFontSize(context, 18),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  translator(arText: "يرجى إصلاح المشاكل التالية قبل المتابعة:", enText: "Please fix the following issues before proceeding:"),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '• $errorMessage',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  translator(arText: "موافق", enText: "OK"),
+                  style: const TextStyle(
+                    fontSize: ResponsiveHelper.getResponsiveFontSize(context, 16),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    }
+    
+    // Show warnings if any
+    if (warnings.isNotEmpty) {
+      String warningMessage = warnings.join('\n• ');
+      await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: Row(
+              children: [
+                const Icon(Icons.warning, color: Colors.orange, size: 28),
+                const SizedBox(width: 10),
+                Text(
+                  translator(arText: "يرجى الملاحظة", enText: "Please Note"),
+                  style: const TextStyle(
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                    fontSize: ResponsiveHelper.getResponsiveFontSize(context, 18),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  translator(arText: "العناصر التالية تحتاج إلى اهتمام:", enText: "The following items need attention:"),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '• $warningMessage',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  translator(arText: "موافق", enText: "OK"),
+                  style: const TextStyle(
+                    fontSize: ResponsiveHelper.getResponsiveFontSize(context, 16),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  /// Calculates the complete order summary including subtotal, discounts, promotions, and taxes
+  /// 
+  /// [ref] - Riverpod reference for accessing providers
+  /// [cartItems] - List of items in the cart
+  /// [discountType] - Type of discount (fixed value or percentage)
+  /// [discountValue] - Value of the discount
+  /// [discountAmount] - Discount amount from the provider
+  /// [payments] - List of payment methods and amounts
+  /// [promotionsServices] - Service for applying promotions
+  /// [decimalsSetting] - Decimal precision setting
+  /// [context] - BuildContext for showing validation messages (optional)
+  /// 
+  /// Returns an [OrderSummary] object with all calculated values
+  /// 
+  /// Throws [ArgumentError] if cart is empty or total amount is negative
+  static Future<OrderSummary> calculate({
+    required Ref ref,
+    required List<CartItem> cartItems,
+    required DiscountType? discountType,
+    required double discountValue,
+    required double discountAmount,
+    required int? customerId,
+    required List<PaymentItem> payments,
+    required PromotionsServices promotionsServices,
+    required DecimalsNumbers decimalsSetting,
+    required BuildContext context,
+  }) async {
+    final manualPromos = ref.read(appliedPromotionsProvider);
+
+    // 1. Calculate subtotal
+    double subtotal = cartItems.fold(0, (sum, item) {
+      final priceWithoutTax = (item.inclusive) ? item.price : item.price / (1.15);
+      return sum + priceWithoutTax * item.quantity;
+    });
+
+    // 2. Use discountAmount from provider
+    // double discountAmount = 0.0;
+    // if (discountType != null) {
+    //   discountAmount = discountType == DiscountType.fixedValue
+    //       ? discountValue
+    //       : (subtotal * (discountValue / 100));
+    // }
+    // discountAmount = discountAmount.clamp(0, subtotal);
+
+    // 3. Build a SalesInvoice for promotion calculation
+    final salesOrderModel = SalesOrderModel(
+      id: null,
+      createdAt: '',
+      updatedAt: '',
+      deletedAt: '',
+      cashierName: '',
+      customerId: customerId,
+      invoiceId: null,
+      haveRefund: 0,
+      cashierShiftId: 0,
+      workDate: '',
+      subTotalBeforeDiscount: subtotal.toStringAsFixed(2),
+      totalAmountBeforeDiscount: '',
+      taxBeforeDiscount: '',
+      subTotal: subtotal.toStringAsFixed(2),
+      tax: '',
+      totalAmount: '',
+      note: '',
+      isRefund: 0,
+      userId: '',
+      tenantId: '',
+      discountType: discountType == DiscountType.fixedValue
+          ? 1
+          : discountType == DiscountType.percentage
+              ? 2
+              : 0,
+      discountValue: discountValue,
+      discount: discountAmount,
+      discountAmount: discountAmount ,
+      uuid: '',
+      orderNumber: '',
+      receiptNumber: '',
+      isBackOfficeSync: 0,
+      isZactaSync: 0,
+      customerPhone: '',
+      paymentMethod: 0,
+      saleTypeId: 0,
+    );
+    final salesOrderItems = cartItems
+        .map((item) => SalesItemsModel(
+              id: null,
+              createdAt: '',
+              updatedAt: '',
+              productId: item.productId,
+              categoryId: item.categoryId,
+              productNameEn: item.nameEn,
+              productNameAr: item.nameAr,
+              unitOfMeasureId: item.unitId.toString(),
+              quantity: item.quantity.toString(),
+              price: item.price.toString(),
+              total: '',
+              note: '',
+              tax: '',
+              isRefund: 0,
+              userId: '',
+              tenantId: '',
+              uniqueId: '',
+              invoiceId: '',
+              isExclusive: item.inclusive,
+              discount: 0.0,
+              loyaltyDiscount: 0.0,
+              promotionValue: 0.0,
+              vatBeforeDiscount: 0.0,
+              additionalAllowns: 0.0,
+              priceIncludeVAT: 0.0,
+            ))
+        .toList();
+    final salesInvoice = SalesInvoice(
+      salesOrderModel: salesOrderModel,
+      salesOrderItems: salesOrderItems,
+      salesOrderPayMethods: [],
+    );
+
+    // 4. Apply promotions (automatic + manual)
+    final invoiceWithPromotions = await PromotionsServices.applyAllPromotionsToInvoice( ref,salesInvoice,manualPromos);
+    double orderPromotionAmount = invoiceWithPromotions.salesOrderModel.promotionAmount ?? 0;
+    double itemPromotionsTotal = invoiceWithPromotions.salesOrderItems.fold<double>(
+      0, (sum, item) => sum + (item.promotionAmount ?? 0));
+    double promotionAmount = orderPromotionAmount + itemPromotionsTotal;
+
+    // 5. Calculate tax and total after promotions
+    double taxableAmount = subtotal - promotionAmount;
+    double taxAmount = taxableAmount * 0.15;
+    double totalAmount = taxableAmount + taxAmount;
+    
+    // 6. Check if total amount is negative and handle by removing promotions/discounts
+    List<String> validationMessages = [];
+    if (totalAmount < 0) {
+      validationMessages.add(_createValidationMessage('negative_total'));
+      // Do NOT remove or zero out promotions here!
+      // Let each promotion handler manage its own criteria.
+    }
+    
+    // Calculate payment totals
+    double totalPaid = payments.fold(0, (sum, item) => sum + item.amount);
+    double remaining = (totalAmount - totalPaid).clamp(0, double.infinity);
+    double change = (totalPaid > totalAmount) ? (totalPaid - totalAmount) : 0.0;
+
+    // 8. Rounding with validation
+    double roundNum(num value) {
+      if (value.isNaN || value.isInfinite) {
+        return 0.0;
+      }
+      if (decimalsSetting == DecimalsNumbers.two) {
+        return (value * 100).roundToDouble() / 100;
+      } else {
+        return (value * 100000).roundToDouble() / 100000;
+      }
+    }
+
+    // 9. Validate final amounts
+    if (totalAmount < 0) {
+      throw ArgumentError('Total amount cannot be negative');
+    }
+   
+     dPrint("#####orderSummary.validationMessages${validationMessages}");
+
+    // Show validation messages to user if context is provided
+    if (validationMessages.isNotEmpty) {
+      dPrint("Showing validation messages: $validationMessages");
+      await _showValidationMessages(validationMessages, context);
+    }
+    
+    return OrderSummary(
+      subtotal: roundNum(subtotal),
+      discountAmount: roundNum(discountAmount),
+      promotionAmount: roundNum(promotionAmount),
+      taxAmount: roundNum(taxAmount),
+      totalAmount: roundNum(totalAmount),
+      totalPaid: roundNum(totalPaid),
+      remaining: roundNum(remaining),
+      change: roundNum(change),
+      taxBeforeDiscount: roundNum(taxAmount),
+      totalAmountBeforeDiscount: roundNum(subtotal + taxAmount),
+      subTotalBeforeDiscount: roundNum(subtotal),
+      orderPromotionValue: roundNum(orderPromotionAmount),
+      orderPromotionType: invoiceWithPromotions.salesOrderModel.promotionType,
+      orderPromotionAmount: roundNum(orderPromotionAmount),
+      orderPromotionCode: invoiceWithPromotions.salesOrderModel.promotionCode,
+      itemPromotions: Map.fromEntries(
+        invoiceWithPromotions.salesOrderItems
+            .where((item) => 
+                item.promotionAmount != null && 
+                item.promotionAmount! > 0 )
+            .map((item) => MapEntry(
+                  int.parse(item.productId),
+                  ItemPromotionData(
+                    promotionValue: roundNum(item.promotionValue ?? 0),
+                    promotionType: item.promotionType,
+                    promotionAmount: roundNum(item.promotionAmount ?? 0),
+                    promotionCode: item.promotionCode,
+                    promotionId: item.promotionId,
+                  ),
+                )),
+      ),
+      promotionsRemoved: false,
+      validationMessages: validationMessages,
+      discountType:  discountType == DiscountType.percentage? 1:0,
+      discount: discountValue,
+      customerId: customerId,
+    );
+  }
+} 
+
+
+
+ await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: Row(
+              children: [
+                const Icon(Icons.warning, color: Colors.orange, size: 28),
+                const SizedBox(width: 10),
+                Text(
+                  translator(arText: "يرجى الملاحظة", enText: "Please Note"),
+                  style: const TextStyle(
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                    fontSize: ResponsiveHelper.getResponsiveFontSize(context, 18),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  translator(arText: "العناصر التالية تحتاج إلى اهتمام:", enText: "The following items need attention:"),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '• $warningMessage',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  translator(arText: "موافق", enText: "OK"),
+                  style: const TextStyle(
+                    fontSize: ResponsiveHelper.getResponsiveFontSize(context, 16),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );

@@ -1,0 +1,148 @@
+// ignore_for_file: prefer_const_constructors, use_build_context_synchronously, prefer_const_literals_to_create_immutables, sized_box_for_whitespace
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../controllers/flutter_flow/flutter_flow_theme.dart';
+import '../../../controllers/flutter_flow/flutter_flow_util.dart';
+import '../../../controllers/flutter_flow/form_field_controller.dart';
+import '../../../views/Login/image_widget.dart';
+import 'login_button_row.dart';
+import 'login_footer_widget.dart';
+import 'login_form_widget.dart';
+import '../../../views/Login/login_helpers.dart';
+import 'login_providers.dart';
+export '../../../viewModels/login_model.dart';
+
+class LoginWidget extends ConsumerStatefulWidget {
+  const LoginWidget({super.key});
+  @override
+  ConsumerState<LoginWidget> createState() => _LoginWidgetState();
+}
+
+class _LoginWidgetState extends ConsumerState<LoginWidget> {
+  late LoginModel _model;
+  final scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isLoginButtonEnabled = true;
+  final LoginHelpers _loginHelpers = LoginHelpers();
+
+  @override
+  void initState() {
+    super.initState();
+    _model = createModel(context, () => LoginModel());
+
+    _model.emailAddressController ??= TextEditingController();
+    _model.emailAddressFocusNode ??= FocusNode();
+    _model.passwordController ??= TextEditingController();
+    _model.passwordFocusNode ??= FocusNode();
+    _model.textController3 ??= TextEditingController();
+    _model.textFieldFocusNode ??= FocusNode();
+
+    Locale? currentLocale = FFLocalizations.getStoredLocale();
+    String initialDropdownValue = currentLocale?.languageCode == 'ar' ? 'عربي' : 'English';
+
+    _model.dropDownValue = initialDropdownValue;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _model.emailAddressController?.text = FFLocalizations.of(context).getText('sqabz9sq' /* Placeholder for actual key */);
+        _model.dropDownValueController = FormFieldController<String>(_model.dropDownValue);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _model.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _model.unfocusNode.canRequestFocus ? FocusScope.of(context).requestFocus(_model.unfocusNode) : FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        key: scaffoldKey,
+        backgroundColor: FlutterFlowTheme.of(context).secondaryBackground,
+        body: Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Expanded(
+              flex: 8,
+              child: Container(
+                width: 100.0,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  color: FlutterFlowTheme.of(context).secondaryBackground,
+                ),
+                alignment: AlignmentDirectional(0.0, -1.0),
+                child: Align(
+                  alignment: AlignmentDirectional(0.0, 0.0),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 140.0,
+                          decoration: BoxDecoration(
+                            color: FlutterFlowTheme.of(context).secondaryBackground,
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(16.0),
+                              bottomRight: Radius.circular(16.0),
+                              topLeft: Radius.circular(0.0),
+                              topRight: Radius.circular(0.0),
+                            ),
+                          ),
+                          alignment: AlignmentDirectional(-1.0, 0.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Align(
+                                alignment: AlignmentDirectional(0.0, 0.0),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  child: Image.asset(
+                                    AppAssets.newLogo,
+                                    width: 193.0,
+                                    height: 136.0,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        LoginFormWidget(model: _model),
+                        LoginButtonRow(
+                          isLoginButtonEnabled: _isLoginButtonEnabled,
+                          onLoginPressed: () {
+                            setState(() {
+                              _isLoginButtonEnabled = true;
+                            });
+                            _loginHelpers.handleLogin(context, _model, ref);
+                            ref.read(timeToDisplayInitialBalanceProvider.notifier).state = false;
+                          },
+                          onExitPressed: () => exit(0),
+
+                          // onExitPressed: () => print('Exit button pressed...'),
+                        ),
+                        LoginFooterWidget(
+                          dropDownValueController: _model.dropDownValueController!,
+                          dropDownValue: _model.dropDownValue!,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            ImageWidget(),
+          ],
+        ),
+      ),
+    );
+  }
+}
