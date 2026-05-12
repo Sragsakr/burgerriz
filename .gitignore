@@ -127,3 +127,4 @@ migrate_working_dir/
 *.config.dart
 *.freezed.dart
 *.mocks.dart
+.opencode

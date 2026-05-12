@@ -126,7 +126,7 @@ Future<void> syncMenuData(BuildContext context, WidgetRef ref, ValueNotifier<dou
   // Sync menu item data using new sync services
   await menuItemSyncService.syncAllMenuItemData();
   progressNotifier.value = progressMenuStart + (progressMenuEnd - progressMenuStart) * 0.25;
-
+// return;
   await unitOfMeasureService.fetchUnitOfMeasureTranslations();
   progressNotifier.value = progressMenuStart + (progressMenuEnd - progressMenuStart) * 0.5;
 

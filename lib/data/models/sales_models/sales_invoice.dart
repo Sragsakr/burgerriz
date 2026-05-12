@@ -35,6 +35,7 @@ class SalesInvoice {
           kdsItems.add({
             "sortOrder": sortOrder,
             "itemGuid": uuid.v4(),
+
             "refItemGuid": "",
             "action": "new",
             "customerNo": "P1",
@@ -81,6 +82,7 @@ class SalesInvoice {
     return {
       "id": numericOrderId,
       "invoiceId": invoiceId,
+      "orderGuid":salesOrderModel.uuid,
       "order_id": numericOrderId,
       "created_at": salesOrderModel.createdAt,
       "status": "Pending",

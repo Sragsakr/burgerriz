@@ -50,10 +50,10 @@ class LoginFooterWidget extends ConsumerWidget {
           padding: const EdgeInsetsDirectional.fromSTEB(0.0, 12.0, 0.0, 12.0),
           child: TextButton(
             onPressed: () {
-              if (kDebugMode) {
-                context.go(InstallWidgetKiosk.routePath);
-                return;
-              }
+              // if (kDebugMode) {
+              //   context.go(InstallWidgetKiosk.routePath);
+              //   return;
+              // }
               showAppDialog(
                 context: context,
                 builder: (context1) => ConfirmBackDialog(

@@ -218,8 +218,8 @@ class _NewInstallWidgetState extends ConsumerState<NewInstallWidget> {
             final ip = _ipController.text.trim();
 
             final ok = await _controller.submit(
-              // ipAddress: ip,
               ipAddress: ip,
+              // ipAddress: "10.0.2.15",
               clusterId: clusterId,
               environment: _environmentValue(),
               firstLanguageCode: first,
